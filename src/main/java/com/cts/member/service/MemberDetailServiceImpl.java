@@ -2,18 +2,21 @@ package com.cts.member.service;
 
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import com.cts.member.dao.MemberDao;
 import com.cts.member.model.MemberDetail;
-import com.cts.member.model.Plans;
 import com.cts.member.model.RequestDetails;
 import com.cts.member.response.MemberResponse;
+import com.cts.member.util.MemberConstants;
 import com.cts.member.util.MemberUtils;
 
 
@@ -25,36 +28,45 @@ public class MemberDetailServiceImpl {
 	@Autowired
 	MemberDao memberDao;
 	
-	@Autowired
-	RestTemplate restTemplet; 
+	
 	
 	@Value("${excel.filepath}")
 	String fileUrl;
 	
+	 @Autowired HttpServletRequest request;
 	
-	@Value("${plan.fetch.plan.detail.url}")
-	String planDetailUrl;
+	@Autowired
+	PlanDetails planDetail;
 	
-	
-	public MemberResponse createMemberDetail(String fileName, String planId) {
+	@SuppressWarnings("rawtypes")
+	public ResponseEntity<MemberResponse> createMemberDetail(String fileName, String planId, MemberResponse resp) {
 		
-		MemberResponse resp = new MemberResponse();
+		
 		List<MemberDetail> memberList =  MemberUtils.readXml(fileUrl+fileName);
 		
-		for(MemberDetail mem: memberList){
-			logger.info("members : "+mem);
-					 
-			Plans plan = restTemplet.getForObject(planDetailUrl+mem.getPlanId(), Plans.class);
-			mem.setPlanName(plan.getPlanName());
-			mem.setPlanStatus(plan.getStatus());
+		resp = validateMember(memberList,resp);
+		if(resp.getErrorMap().isEmpty()) {
+			String authorizationToken = request.getHeader("Authorization").substring(7);
+			planDetail.fetchPlanDetails(memberList, authorizationToken, resp);
+		
+			if(resp.getErrorMap().isEmpty()) {
+				List<MemberDetail> persistedMemberList =	memberDao.persistMember(memberList);
+				resp.setMembersDetail(persistedMemberList);
+				resp.setMessage("SUCCESS");
+				resp.setMessageCode("200");
+				return new ResponseEntity<MemberResponse>(resp,HttpStatus.OK);
+				
+			}else {
+				resp.setMessage(MemberConstants.CONFLICT_MESSAGE);
+				resp.setMessageCode(MemberConstants.CONFLICT_CODE);
+				return new ResponseEntity<MemberResponse>(resp,HttpStatus.CONFLICT);
+			}
+		}else {
+			resp.setMessageCode(MemberConstants.CONFLICT_CODE);
+			resp.setMessage(MemberConstants.CONFLICT_MESSAGE);
+			return new ResponseEntity<MemberResponse>(resp,HttpStatus.CONFLICT);
 		}
-		List<MemberDetail> persistedMemberList =	memberDao.persistMember(memberList);
-			resp.setMembersDetail(persistedMemberList);
-			resp.setMembersDetail(memberList);
-			resp.setMessage("SUCCESS");
-			resp.setMessageCode("200");
-			
-		return resp;
+		
 	}
 
 	public void saveRequestDetails(String requesterId,String fileName) {
@@ -64,5 +76,17 @@ public class MemberDetailServiceImpl {
 		rd.setRequesterId(requesterId);
 	    memberDao.persistRequestDetail(rd);
 	}
+	
+	
+	
+	private MemberResponse validateMember(List<MemberDetail> memberList, MemberResponse resp) {
+		
+		for(MemberDetail member : memberList) {
+			if(memberDao.isMemberExists(member.getMemberId()))
+				resp.getErrorMap().put(MemberConstants.MEMBER_ID+" "+ member.getMemberId() ,  MemberConstants.MEMBER_ALREADY_EXISTS);
+		}
+		return resp;
+	}
+	
 	
 }

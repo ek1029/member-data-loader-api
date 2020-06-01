@@ -1,8 +1,5 @@
 package com.cts.member.request;
 
-import java.util.List;
-
-import com.cts.member.model.MemberDetail;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

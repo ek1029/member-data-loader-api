@@ -3,6 +3,8 @@ package com.cts.member.resource;
 
 
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +42,9 @@ public class MemberResource {
 	
 	@Autowired
 	AuthenticationManager authenticationManager;
+	/*
+	 * @Autowired HttpServletRequest request;
+	 */
 	
 	  @PostMapping(consumes = "application/json", produces = "application/json")
 	  public ResponseEntity<MemberResponse>  createMember(@RequestBody MemberRequest memberRequest) {
@@ -54,26 +59,8 @@ public class MemberResource {
 			  resp.setMessageCode(MemberConstants.BAD_REQUEST_CODE);
 			  return new ResponseEntity<MemberResponse>(resp,HttpStatus.BAD_REQUEST);
 		  }
-    	 resp =   memberDetailServiceImpl.createMemberDetail(memberRequest.getFileName(),  memberRequest.getRequesterId());
-		 return new ResponseEntity<MemberResponse>(resp,HttpStatus.OK);
-	  }
-
-	  
-	  @GetMapping("/greeting")
-	  public String greeting() {
-		  return "Welcome to Cognizant";
+    	 return  memberDetailServiceImpl.createMemberDetail(memberRequest.getFileName(),  memberRequest.getRequesterId(), resp);
+		// return new ResponseEntity<MemberResponse>(resp,HttpStatus.OK);
 	  }
 	  
-	  @PostMapping("/authenticate")
-	  public String generateTocken(@RequestBody AuthRequest authRequest) throws Exception {
-		try {  
-		  authenticationManager.authenticate(
-				   								new UsernamePasswordAuthenticationToken(authRequest.getUserName(), authRequest.getPassword())
-		                                    );
-		}catch(Exception e) {
-			throw new Exception("Invalid UserName and password");
-		}
-		return jwtUtils.generateToken(authRequest.getUserName());
-	  }
-	
 }

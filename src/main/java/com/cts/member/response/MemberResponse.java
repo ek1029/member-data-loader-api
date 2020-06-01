@@ -1,11 +1,9 @@
 package com.cts.member.response;
 
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.xml.bind.annotation.XmlRootElement;
 
 import com.cts.member.model.MemberDetail;
 
