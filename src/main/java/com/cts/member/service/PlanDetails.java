@@ -43,43 +43,34 @@ Logger logger = LoggerFactory.getLogger(PlanDetails.class);
 	
 	
 	public void fetchPlanDetails(List<MemberDetail> memberList, String authorizationToken, MemberResponse resp) {
-		Plans plan = null;
-		//String authorizationToken = request.getHeader("Authorization").substring(7);
+		
 		HttpEntity request = enrichHttpEntity(authorizationToken, httpHeaders); 
 		for(MemberDetail mem: memberList){
-			
-			getPlanById(resp, request, mem);
+			Plans plan = getPlanDetailById(resp, request, mem);
+			if(null!=plan) {
+				mem.setPlanName(plan.getPlanName());
+				mem.setPlanStatus(plan.getStatus());
+			}else {
+				resp.getErrorMap().put("PlanId"+" "+mem.getPlanId(), MemberConstants.INVALID_PLAN);
+			}
 		}
-		
 	}
 
-	@HystrixCommand(fallbackMethod = "getFallPlanById")
-	public Plans getPlanById(MemberResponse resp, HttpEntity request, MemberDetail mem) {
-		Plans plan = null;
+	@HystrixCommand(fallbackMethod = "getFallbackPlanById")
+	public Plans getPlanDetailById(MemberResponse resp, HttpEntity request, MemberDetail mem) {
 		ResponseEntity<Plans> planResponseEntity = restTemplet.exchange(planDetailUrl+mem.getPlanId(),HttpMethod.GET,request ,Plans.class);
 		if(planResponseEntity.getBody() != null) {
-			plan = planResponseEntity.getBody();
-			mem.setPlanName(plan.getPlanName());
-			mem.setPlanStatus(plan.getStatus());
-		}else {
-			resp.getErrorMap().put("PlanId"+" "+mem.getPlanId(), MemberConstants.INVALID_PLAN);
+			return planResponseEntity.getBody();
 		}
-		return plan;
+		return null;
 	}
 	
-	public Plans getFallPlanById(MemberResponse resp, HttpEntity request, MemberDetail mem) {
+	public Plans getFallbackPlanById(MemberResponse resp, HttpEntity request, MemberDetail mem) {
 		logger.error("<<< Plan details from PlanFallback !!! >>>");
 		Plans plan=null;
-		
-			plan = new Plans();
-			/*
-			 * mem.setPlanName(plan.getPlanName()); mem.setPlanStatus(plan.getStatus());
-			 */
-			
-			 mem.setPlanName("N/A");
-			 mem.setPlanStatus("N/A");
-			
-		
+		plan = new Plans();
+		mem.setPlanName("N/A");
+		mem.setPlanStatus("N/A");
 		return plan;
 	}
 	
