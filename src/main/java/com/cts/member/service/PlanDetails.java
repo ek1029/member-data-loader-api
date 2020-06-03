@@ -28,25 +28,19 @@ public class PlanDetails {
 
 	
 Logger logger = LoggerFactory.getLogger(PlanDetails.class);	
-	/*
-	 * @Autowired HttpServletRequest request;
-	 */
 	
-	@Autowired
-	RestTemplate restTemplet; 
 	
 	@Autowired
 	HttpHeaders httpHeaders;
 	
-	@Value("${plan.fetch.plan.detail.url}")
-	String planDetailUrl;
-	
+	@Autowired
+	PlanDetailsClient planDetailsClient;
 	
 	public void fetchPlanDetails(List<MemberDetail> memberList, String authorizationToken, MemberResponse resp) {
 		
-		HttpEntity request = enrichHttpEntity(authorizationToken, httpHeaders); 
+		HttpEntity request = enrichHttpEntity(authorizationToken); 
 		for(MemberDetail mem: memberList){
-			Plans plan = getPlanDetailById(resp, request, mem);
+			Plans plan = planDetailsClient.getPlanDetailById(resp, request, mem);
 			if(null!=plan) {
 				mem.setPlanName(plan.getPlanName());
 				mem.setPlanStatus(plan.getStatus());
@@ -56,26 +50,10 @@ Logger logger = LoggerFactory.getLogger(PlanDetails.class);
 		}
 	}
 
-	@HystrixCommand(fallbackMethod = "getFallbackPlanById")
-	public Plans getPlanDetailById(MemberResponse resp, HttpEntity request, MemberDetail mem) {
-		ResponseEntity<Plans> planResponseEntity = restTemplet.exchange(planDetailUrl+mem.getPlanId(),HttpMethod.GET,request ,Plans.class);
-		if(planResponseEntity.getBody() != null) {
-			return planResponseEntity.getBody();
-		}
-		return null;
-	}
-	
-	public Plans getFallbackPlanById(MemberResponse resp, HttpEntity request, MemberDetail mem) {
-		logger.error("<<< Plan details from PlanFallback !!! >>>");
-		Plans plan=null;
-		plan = new Plans();
-		mem.setPlanName("N/A");
-		mem.setPlanStatus("N/A");
-		return plan;
-	}
+
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public HttpEntity enrichHttpEntity(String authorizationToken, HttpHeaders httpHeader) {
+	public HttpEntity enrichHttpEntity(String authorizationToken) {
 		httpHeaders.setBearerAuth(authorizationToken);
 		return new HttpEntity(httpHeaders);
 		
