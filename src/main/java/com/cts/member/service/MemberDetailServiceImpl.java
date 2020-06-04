@@ -38,7 +38,6 @@ public class MemberDetailServiceImpl {
 	@Autowired
 	PlanDetails planDetail;
 	
-	@SuppressWarnings("rawtypes")
 	public ResponseEntity<MemberResponse> createMemberDetail(String fileName, String planId, MemberResponse resp) {
 		
 		
@@ -52,8 +51,8 @@ public class MemberDetailServiceImpl {
 			if(resp.getErrorMap().isEmpty()) {
 				List<MemberDetail> persistedMemberList =	memberDao.persistMember(memberList);
 				resp.setMembersDetail(persistedMemberList);
-				resp.setMessage("SUCCESS");
-				resp.setMessageCode("200");
+				resp.setMessage(MemberConstants.SUCCESS_MESSAGE);
+				resp.setMessageCode(MemberConstants.SUCCESS_CODE);
 				return new ResponseEntity<MemberResponse>(resp,HttpStatus.OK);
 				
 			}else {

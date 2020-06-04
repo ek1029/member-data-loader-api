@@ -52,8 +52,9 @@ public class PlanDetailsClient {
 			plan = new Plans();
 			plan.setPlanName("N/A");
 			plan.setStatus("N/A");
+			return plan;
 		}
-		return plan;
+		
 	}
 	
 }

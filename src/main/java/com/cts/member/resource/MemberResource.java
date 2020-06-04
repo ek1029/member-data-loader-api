@@ -30,14 +30,11 @@ public class MemberResource {
 
 	private static final Logger logger = LoggerFactory.getLogger(MemberResource.class);
 	
-	@Autowired
-	JWTUtils jwtUtils;
+	
 	
 	@Autowired
 	MemberDetailServiceImpl memberDetailServiceImpl;
 	
-	@Autowired
-	AuthenticationManager authenticationManager;
 	
 	  @PostMapping(consumes = "application/json", produces = "application/json")
 	  public ResponseEntity<MemberResponse>  createMember(@RequestBody MemberRequest memberRequest) {

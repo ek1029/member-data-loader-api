@@ -18,4 +18,9 @@ public class MemberConstants {
 	public static final String MEMBER_ALREADY_EXISTS = "already exists";
 	
 	public static final String INVALID_PLAN = "Plan is invalid";
+	
+	public static final String SUCCESS_MESSAGE = "Success";
+	
+	public static final String SUCCESS_CODE = "200";
+	
 }
